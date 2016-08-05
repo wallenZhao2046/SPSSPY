@@ -20,12 +20,12 @@ def getFilesInDir(rootDir):
             fileList.append(os.path.join(rootAbsDir, f))
     return fileList
 
-def getRotatedMatrix(pivotTable, rowCount, colCount):
+def getRotatedMatrix(pivotTable, rowLabels, rowCount, colCount):
     columnLabels = pivotTable.ColumnLabelArray()
-    rowLabels = pivotTable.RowLabelArray()
+    # rowLabels = pivotTable.RowLabelArray()
     dataArray = pivotTable.DataCellArray()
     table = []
-
+   
     for i in range(0, rowCount):
         row = []
         for j in range(0, colCount):
@@ -38,38 +38,48 @@ def getRotatedMatrix(pivotTable, rowCount, colCount):
                 if j == 0:
                     # print "i = %r" %i 
                     if i < rowCount:
-                        row.append(rowLabels.GetValueAt(i-1, 1)) 
+                        row.append(rowLabels[i-1]) 
                 else:
                     row.append(dataArray.GetValueAt(i-1, j-1))
         table.append(row)
-
-    print "table is %r" %table
     return table
 
 def convertMatrixToHtml(title, table):
-    table_html = ""
-    table_html += r"""  
+    table_html = u""
+    table_html += u"""  
         <table class="gridtable">
-        <caption >%s</caption>
-    """%title
+        <h1 >%s</h1>
+    """%unicode(title, 'utf-8')
     for i in range(0, len(table)):
-        table_html += "<tr>"
+        table_html += u"<tr>"
         row = table[i]
         for j in range(0, len(row)):
             if i == 0 or j == 0:
-                table_html += ("<th>")
+                table_html += (u"<th>")
             else:
-                table_html += ("<td>")
-            table_html += (row[j])
+                table_html += (u"<td>")
+            if type(row[j]) is not unicode:
+              val = unicode(str(row[j]), 'utf-8')
+            else:
+              val = row[j]
+            table_html += val
             if i == 0 or j == 0:
-                table_html += ("</th>")
+                table_html += (u"</th>")
             else:
-                table_html += ("</td>")
-        table_html += ("</tr>")
-    table_html += "</table>"
-    
-    print "html: %s" %table_html
+                table_html += (u"</td>")
+        table_html += (u"</tr>")
+    table_html += u"</table>"
     return table_html
+
+def getPivotTable(outputItems, name):
+  for i in range(outputItems.Size()-1, -1, -1):
+      outputItem = outputItems.GetItemAt(i)
+      if outputItem.GetType() == sc.OutputItemType.PIVOT \
+         and outputItem.GetDescription() == name:
+          break
+  pivotTable = outputItem.GetSpecificType()
+  return pivotTable
+
 
 ## **
 ## sFile is absolute path
@@ -180,14 +190,7 @@ def execute(sFile, outDir):
         outDoc = sc.GetDesignatedOutputDoc()
         outputItems = outDoc.GetOutputItems()
 
-        for i in range(outputItems.Size()-1, -1, -1):
-            outputItem = outputItems.GetItemAt(i)
-            if outputItem.GetType() == sc.OutputItemType.PIVOT \
-               and outputItem.GetDescription() == 'Total Variance Explained':
-                break
-
-        pivotTable = outputItem.GetSpecificType()
-        print('get result from pivotTable: ' + pivotTable.GetTitleText())
+        pivotTable = getPivotTable(outputItems, 'Total Variance Explained')
 
         rowLabels = pivotTable.RowLabelArray()
         columnLabels = pivotTable.ColumnLabelArray()
@@ -246,34 +249,85 @@ def execute(sFile, outDir):
         w.writerows(returnMat)
         f.close()
 
-        
-
-        html = open(htmlFile, 'wb')
 
 
-        for i in range(outputItems.Size()-1, -1, -1):
-            outputItem = outputItems.GetItemAt(i)
-            if outputItem.GetType() == sc.OutputItemType.PIVOT \
-               and outputItem.GetDescription() == 'Rotated Component Matrix':
-                break
-        pivotTable = outputItem.GetSpecificType()
+       
+        # generate html files
+        htmlF = open(htmlFile, 'w')
 
-        print('get rotated component matrix from pivotTable: ' + pivotTable.GetTitleText())
+        html = u"""
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title></title>
+            <style type="text/css">
+              table.gridtable {
+                font-family: verdana, arial, sans-serif;
+                font-size: 11px;
+                color: #333333;
+                border-width: 1px;
+                border-color: #666666;
+                border-collapse: collapse;
+              }
+              
+              table.gridtable th {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #dedede;
+              }
+              
+              table.gridtable td {
+                border-width: 1px;
+                padding: 8px;
+                border-style: solid;
+                border-color: #666666;
+                background-color: #ffffff;
+              }     
+            </style>
+          </head>
+        """
 
+        html += u"<body>"
+        # the top 20 
+        table_html = convertMatrixToHtml('前20名典当行', returnMat[0:20])
+        html += table_html
 
+        # the last 20 
+        # table_html = convertMatrixToHtml('后20名典当行', returnMat[-1:-21:-1])
+        # html += table_html
 
-        # for i in range(0, 6):
-        #     print 'columnLabel: %s' %columnLabels.GetValueAt(1, i)
+        pivotTable = getPivotTable(outputItems, 'Rotated Component Matrix')
 
-        
-        # for i in range(0, 11):
-        #     print 'rowLabel: %s' %rowLabels.GetValueAt(i, 1)
-        row = 12;
+        row = 12
         column = 7
-        table = getRotatedMatrix(pivotTable, row, column)
-        
-        table_html = convertMatrixToHtml(pivotTable.GetTitleText(), table)
 
+        rowLabels = [u'资产负债率', u'总资产增长率', u'典当资金周转率', u'总资产利润率', u'净资产增长率', u'净资产收益率', u'期末逾期贷款率', u'绝当率', u'单笔超注册资金25%贷款占比', u'房地产集中度', u'大额房地产余额占比']
+        table = getRotatedMatrix(pivotTable, rowLabels, row, column)
+        
+        table_html = convertMatrixToHtml("旋转后的成分矩阵", table)
+        html += table_html
+        
+        pivotTable = getPivotTable(outputItems, 'Total Variance Explained')  
+        row = 12
+        column = 10
+        rowLabels = [u'组件1', u'组件2', u'组件3', u'组件4', u'组件5', u'组件6', u'组件7', u'组件8', u'组件9', u'组件10', u'组件11']
+        table = getRotatedMatrix(pivotTable, rowLabels, row, column) 
+        table_html = convertMatrixToHtml("总方差解释", table)
+        html += table_html
+
+
+         # all 
+        table_html = convertMatrixToHtml('所有典当行排名', returnMat)
+        html += table_html
+
+        html += u"</body>"
+        html += u"</html>"
+
+        htmlF.write(html.encode('utf-8'))
+        htmlF.close()
 
     finally:
         sc.StopClient()
