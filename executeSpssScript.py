@@ -46,6 +46,30 @@ def getRotatedMatrix(pivotTable, rowCount, colCount):
     print "table is %r" %table
     return table
 
+def convertMatrixToHtml(title, table):
+    table_html = ""
+    table_html += r"""  
+        <table class="gridtable">
+        <caption >%s</caption>
+    """%title
+    for i in range(0, len(table)):
+        table_html += "<tr>"
+        row = table[i]
+        for j in range(0, len(row)):
+            if i == 0 or j == 0:
+                table_html += ("<th>")
+            else:
+                table_html += ("<td>")
+            table_html += (row[j])
+            if i == 0 or j == 0:
+                table_html += ("</th>")
+            else:
+                table_html += ("</td>")
+        table_html += ("</tr>")
+    table_html += "</table>"
+    
+    print "html: %s" %table_html
+    return table_html
 
 ## **
 ## sFile is absolute path
@@ -244,25 +268,11 @@ def execute(sFile, outDir):
         
         # for i in range(0, 11):
         #     print 'rowLabel: %s' %rowLabels.GetValueAt(i, 1)
+        row = 12;
+        column = 7
+        table = getRotatedMatrix(pivotTable, row, column)
         
-        table = getRotatedMatrix(pivotTable, 12, 7)
-        
-        table_html = ""
-        table_html += r"""  
-            <table border="1px" cellspacing="" cellpadding="">
-            <caption >%s</caption>
-        """%pivotTable.GetTitleText()
-
-        for i in range(0, len(table)):
-            table_html += "<tr>"
-            row = table[i]
-            for j in range(0, len(row)):
-                table_html += ("<td>")
-                table_html += (row[j])
-                table_html += ("</td>")
-            table_html += ("</tr>")
-        table_html += "</table>"
-        print "html: %s" %table_html
+        table_html = convertMatrixToHtml(pivotTable.GetTitleText(), table)
 
 
     finally:
