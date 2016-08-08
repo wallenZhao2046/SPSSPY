@@ -4,6 +4,7 @@ import csv
 import os
 import sys
 import SpssClient as sc
+import contant
 
 ## rootDir may relative path or absolute path
 ## output is file list with absolute path
@@ -90,14 +91,15 @@ def execute(sFile, outDir):
     initName = fNames[1].split('.')[0]
 
     reportFile = initName + '_report.spv'
+    reportFile = os.path.join(outDir, 'report_files', reportFile)
     print 'reportFile is %r' %reportFile
-    reportFile = os.path.join(outDir, reportFile)
+
     resultFile = initName + '_result.csv'
-    resultFile = os.path.join(outDir, resultFile)
+    resultFile = os.path.join(outDir, 'report_files', resultFile)
 
-    htmlFile = initName + "_report.html"
-    htmlFile = os.path.join(outDir, htmlFile)
-
+    report_dir = os.path.join(outDir, 'report_files')
+    if not os.path.exists(report_dir):
+      os.makedirs(report_dir)
     htmlTemplate = "html_template.html"
     
     try:
@@ -211,6 +213,8 @@ def execute(sFile, outDir):
         data_file_name =filename
         returnMat = []
 
+        ## read factor data from data_file
+        print "data_file_name:  %r" %data_file_name
         i = 0
         with open(data_file_name) as fr:
             for line in fr.readlines():
@@ -250,8 +254,19 @@ def execute(sFile, outDir):
         f.close()
 
 
+        area_id = initName.split('_')[1]
+        area_name = contant.area_map[area_id]
+   
 
-       
+        if area_name is None:
+          area_name = initName
+
+        htmlFile = area_name + r"_report.html"
+        htmlFile = os.path.join(outDir, 'html', htmlFile)
+
+        htmlDir =  os.path.join(outDir, 'html')
+        if not os.path.exists(htmlDir):
+          os.makedirs(htmlDir)
         # generate html files
         htmlF = open(htmlFile, 'w')
 
