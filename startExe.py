@@ -30,6 +30,18 @@ def prev_month(date):
 last_month = prev_month(datetime.datetime.now())
 
 yearMonth = last_month.strftime('%Y%m')
+
+year, month = (0, 0)
+if len(sys.argv) == 2:
+    year = sys.argv[1]
+
+if len(sys.argv) == 3:
+    year = sys.argv[1]
+    month = sys.argv[2]
+
+yearMonth = year + month
+print 'yearMonth is %s' %yearMonth
+
 remote_path = '/opt/pentaho/kettle_scripts/spss/loop/monthreport_data_' + yearMonth
 
 # get remote files through SSH
@@ -39,7 +51,7 @@ ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect('123.56.142.113', username='admin', password='Ddt123_')
 
 client = scp.SCPClient(ssh.get_transport())
-client.get(remote_path=remote_path, local_path = 'data', recursive=True)
+#client.get(remote_path=remote_path, local_path = 'data', recursive=True)
 
 """
 default input data dir is ./data
@@ -59,12 +71,7 @@ outDir = os.path.join(outDir , yearMonth)
 if not os.path.exists(outDir):
     os.makedirs(outDir)
 
-if len(sys.argv) == 2:
-    dataDir = sys.argv[1]
 
-if len(sys.argv) == 3:
-    dataDir = sys.argv[1]
-    outDir = sys.argv[2]
 
 if not os.path.isabs(dataDir):
     dataDir = os.path.abspath(dataDir)
@@ -82,4 +89,4 @@ for f in files:
     scr.execute(f, outDir)
 
 
-client.put(files = u'result/201607', remote_path='/opt/apache-tomcat-7.0.57/servers/bigDataReport_test/webapps/spss', recursive=True)
+client.put(files = u'result/%s'%yearMonth, remote_path='/opt/apache-tomcat-7.0.57/servers/bigDataReport_test/webapps/spss', recursive=True)
