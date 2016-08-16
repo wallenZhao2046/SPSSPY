@@ -45,7 +45,7 @@ def getRotatedMatrix(pivotTable, rowLabels, rowCount, colCount):
         table.append(row)
     return table
 
-def convertMatrixToHtml(title, table):
+def convertMatrixToHtml(title, table, enable_color = False):
     table_html = u""
     table_html += u"""  
         <table class="gridtable">
@@ -55,14 +55,33 @@ def convertMatrixToHtml(title, table):
         table_html += u"<tr>"
         row = table[i]
         for j in range(0, len(row)):
+            
+            # val = 0.0
+            # if i > 0 and j == 0:
+            #   if type(row[j]) is not unicode:
+            #     val = unicode(str(row[j]), 'utf-8')
+            #   else:
+            #     val = row[j]
+            # else:
+            #   val = row[j]
+            
+            val = row[j]
             if i == 0 or j == 0:
-                table_html += (u"<th>")
+              table_html += (u"<th>")
             else:
+              try:
+                val = float(val)
+              except:
+                pass
+              if(type(val) is float):
+                if(abs(float(val)) > 0.7 and enable_color):
+                  table_html += u"<td bgcolor='aquamarine'>"
+                else:
+                  table_html += u"<td>"
+              else:
                 table_html += (u"<td>")
-            if type(row[j]) is not unicode:
-              val = unicode(str(row[j]), 'utf-8')
-            else:
-              val = row[j]
+            if type(val) is not unicode:
+              val = unicode(str(val), 'utf-8')
             table_html += val
             if i == 0 or j == 0:
                 table_html += (u"</th>")
@@ -299,7 +318,6 @@ def execute(sFile, outDir):
                 padding: 8px;
                 border-style: solid;
                 border-color: #666666;
-                background-color: #ffffff;
               }     
             </style>
           </head>
@@ -322,7 +340,7 @@ def execute(sFile, outDir):
         rowLabels = [u'资产负债率', u'总资产增长率', u'典当资金周转率', u'总资产利润率', u'净资产增长率', u'净资产收益率', u'期末逾期贷款率', u'绝当率', u'单笔超注册资金25%贷款占比', u'房地产集中度', u'大额房地产余额占比']
         table = getRotatedMatrix(pivotTable, rowLabels, row, column)
         
-        table_html = convertMatrixToHtml("旋转后的成分矩阵", table)
+        table_html = convertMatrixToHtml("旋转后的成分矩阵", table, True)
         html += table_html
         
         pivotTable = getPivotTable(outputItems, 'Total Variance Explained')  
